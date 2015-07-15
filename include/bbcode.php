@@ -107,6 +107,7 @@ function bb_extract_images($body) {
 }
 
 
+
 function bb_replace_images($body, $images) {
 
 	$newbody = $body;
@@ -125,6 +126,21 @@ function bb_replace_images($body, $images) {
 //	logger('replace_images: ' . $newbody);
 	return $newbody;
 }
+
+function bb_replace_forms($body, $forms) {
+        $newbody = $body;
+        $cnt = 0;
+
+        if(! $forms)
+                return $newbody;
+
+        foreach($forms as $form) {
+                $newbody = str_replace('[$#saved_form' . $cnt . '#$]', $form, $newbody);
+                $cnt++;
+        }
+        return $newbody;
+}
+
 
 /**
  * @brief Parses crypt BBCode.
@@ -476,6 +492,154 @@ function bbcode($Text, $preserve_nl = false, $tryoembed = true) {
 			$Text = preg_replace("/\[channel\=0\](.*?)\[\/channel\]/ism", '$1', $Text);
 		}
 	}
+
+
+
+/*
+
+Example Array
+
+Array
+(
+    [command] => list-product
+    [signature] => b83c415f9f54fb32c979a4951d084e24edbf22b3
+    [sku] => Test1
+    [title] => This is a test
+    [images] => Array
+        (
+            [0] => https://rez.waitman.net/photo/0917a3b2e9844f3fca16552a6e78399d-1.jpg?f=&_u=150715063820
+        )
+
+    [price] => $54.00
+    [currency] => USD
+    [options] => Array
+        (
+            [Top Size] => Array
+                (
+                    [0] => XS|Top-XS|0
+                    [1] => S|Top-S|0
+                    [2] => M|Top-M|0
+                    [3] => L|Top-L|0
+                    [4] => XL|Top-XL|2
+                )
+
+            [Color] => Array
+                (
+                    [0] => Red|Red|0
+                    [1] => Green|Green|0
+                    [2] => Blue|Blue|0
+                )
+
+        )
+
+)
+*/
+
+
+
+$saved_forms = array();
+
+// json extensions
+/* 
+
+todo - add key to config 
+todo - use template to generate product info
+todo - change addcart URL
+todo - localization
+todo - multiple images, image handling
+
+idea to validate submitted data using signature.
+
+replace checksum in passed array with key, then calculate hash to compare
+
+ex:
+
+$checksum = $json['signature'];
+$json['signature']=$userkey;
+if ($check != hash("whirlpool",serialize($json),false);
+
+*/
+
+        if (strpos($Text,'[json]') !== false)
+        {
+                $tmpva=explode('[json]',$Text);
+
+                if (count($tmpva)>1)
+                {
+                        for ($i=1;$i<count($tmpva);$i++)
+                        {
+                                $tmpra=explode('[/json]',$tmpva[$i]);
+                                $json = $tmpra[0];
+                                
+                                $tmptxt = '';
+
+                                $vjson = json_decode(html_entity_decode($json), true);
+                                
+                                switch ($vjson['command'])
+                                {
+					case 'list-product':
+					if (count($vjson['images'])>0)
+					{
+						$tmptxt .= '<img src="'.$vjson['images'][0].'" style="max-width:150px;height:auto;" />';
+					}
+					$tmptxt .= '<h2>'.$vjson['title'].'</h2>
+<p>SKU: '.$vjson['sku'].'</p>
+<form method="post" action="addcart.php">
+<input type="hidden" name="signature" value="'.$vjson['signature'].'" />
+';
+
+					if (count($vjson['options'])>0)
+					{
+						$tmptxt .= '<table border="0" cellspacing="0" cellpadding="3">
+';
+						foreach ($vjson['options'] as $k=>$v)
+						{
+							$tmptxt.= '<tr><td>'.$k.':</td><td><select name="'.$k.'">';
+							foreach ($v as $l=>$m)
+							{
+								$tmptxt.='<option value="'.$m.'">';
+								$jm=explode('|',$m);
+								if ($jm[2]>0)
+								{
+									$addprice = ' (+$'.$jm[2].')';
+								} 
+									elseif ($jm[2]<0)
+								{
+									$addprice = ' (-$'.$jm[2].')';
+								} 
+									else
+								{
+									$addprice = '';
+								}
+														
+								$tmptxt.= $jm[1].$addprice.'</option>';
+							}
+							$tmptxt .= '</select></tr>';
+						}
+						if (count($vjson['options'])>0)
+						{
+							$tmptxt .= '</table>';
+						}
+						$tmptxt .= '<p>Price: $'.$vjson['price'].'</p>
+<input type="submit" name="addproduct" value="Add To Cart" />
+</form>
+';
+					}
+
+					break;
+				}
+													
+				$tmpva[$i]='[$#saved_form'.count($saved_forms).'#$]';
+				$saved_forms[]=$tmptxt;
+                        }
+                        $Text = join('',$tmpva);
+                }
+        }
+
+
+
+
+
 
 
 	$x = bb_extract_images($Text);
@@ -956,6 +1120,8 @@ function bbcode($Text, $preserve_nl = false, $tryoembed = true) {
 	$Text = preg_replace("/\<(.*?)(src|href)=\"[^zhfm#](.*?)\>/ism", '<$1$2="">', $Text);
 
 	$Text = bb_replace_images($Text, $saved_images);
+
+	$Text = bb_replace_forms($Text, $saved_forms);
 
 	call_hooks('bbcode', $Text);
 

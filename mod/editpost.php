@@ -159,6 +159,7 @@ function editpost_content(&$a) {
 		'$editor' => $editor
 	));
 
+
 	return $o;
 
 }
