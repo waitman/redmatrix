@@ -9,6 +9,200 @@ require_once('include/event.php');
 require_once('include/zot.php');
 require_once('include/hubloc.php');
 
+/* common currency symbols */
+
+$csig = array (
+  'ALL' => '&#x4c;&#x65;&#x6b;',
+  'AFN' => '&#x60b;',
+  'ARS' => '&#x24;',
+  'AWG' => '&#x192;',
+  'AUD' => '&#x24;',
+  'AZN' => '&#x43c;&#x430;&#x43d;',
+  'BSD' => '&#x24;',
+  'BBD' => '&#x24;',
+  'BYR' => '&#x70;&#x2e;',
+  'BZD' => '&#x42;&#x5a;&#x24;',
+  'BMD' => '&#x24;',
+  'BOB' => '&#x24;&#x62;',
+  'BAM' => '&#x4b;&#x4d;',
+  'BWP' => '&#x50;',
+  'BGN' => '&#x43b;&#x432;',
+  'BRL' => '&#x52;&#x24;',
+  'BND' => '&#x24;',
+  'KHR' => '&#x17db;',
+  'CAD' => '&#x24;',
+  'KYD' => '&#x24;',
+  'CLP' => '&#x24;',
+  'CNY' => '&#xa5;',
+  'COP' => '&#x24;',
+  'CRC' => '&#x20a1;',
+  'HRK' => '&#x6b;&#x6e;',
+  'CUP' => '&#x20b1;',
+  'CZK' => '&#x4b;&#x10d;',
+  'DKK' => '&#x6b;&#x72;',
+  'DOP' => '&#x52;&#x44;&#x24;',
+  'XCD' => '&#x24;',
+  'EGP' => '&#xa3;',
+  'SVC' => '&#x24;',
+  'EEK' => '&#x6b;&#x72;',
+  'EUR' => '&#x20ac;',
+  'FKP' => '&#xa3;',
+  'FJD' => '&#x24;',
+  'GHC' => '&#xa2;',
+  'GIP' => '&#xa3;',
+  'GTQ' => '&#x51;',
+  'GGP' => '&#xa3;',
+  'GYD' => '&#x24;',
+  'HNL' => '&#x4c;',
+  'HKD' => '&#x24;',
+  'HUF' => '&#x46;&#x74;',
+  'INR' => '&#x20B9;',
+  'ISK' => '&#x6b;&#x72;',
+  'IDR' => '&#x52;&#x70;',
+  'IRR' => '&#xfdfc;',
+  'IMP' => '&#xa3;',
+  'ILS' => '&#x20aa;',
+  'JMD' => '&#x4a;&#x24;',
+  'JPY' => '&#xa5;',
+  'JEP' => '&#xa3;',
+  'KZT' => '&#x43b;&#x432;',
+  'KPW' => '&#x20a9;',
+  'KRW' => '&#x20a9;',
+  'KGS' => '&#x43b;&#x432;',
+  'LAK' => '&#x20ad;',
+  'LVL' => '&#x4c;&#x73;',
+  'LBP' => '&#xa3;',
+  'LRD' => '&#x24;',
+  'LTL' => '&#x4c;&#x74;',
+  'MKD' => '&#x434;&#x435;&#x43d;',
+  'MYR' => '&#x52;&#x4d;',
+  'MUR' => '&#x20a8;',
+  'MXN' => '&#x24;',
+  'MNT' => '&#x20ae;',
+  'MZN' => '&#x4d;&#x54;',
+  'NAD' => '&#x24;',
+  'NPR' => '&#x20a8;',
+  'ANG' => '&#x192;',
+  'NZD' => '&#x24;',
+  'NIO' => '&#x43;&#x24;',
+  'NGN' => '&#x20a6;',
+  'NOK' => '&#x6b;&#x72;',
+  'OMR' => '&#xfdfc;',
+  'PKR' => '&#x20a8;',
+  'PAB' => '&#x42;&#x2f;&#x2e;',
+  'PYG' => '&#x47;&#x73;',
+  'PEN' => '&#x53;&#x2f;&#x2e;',
+  'PHP' => '&#x20b1;',
+  'PLN' => '&#x7a;&#x142;',
+  'QAR' => '&#xfdfc;',
+  'RON' => '&#x6c;&#x65;&#x69;',
+  'RUB' => '&#x440;&#x443;&#x431;',
+  'SHP' => '&#xa3;',
+  'SAR' => '&#xfdfc;',
+  'RSD' => '&#x414;&#x438;&#x43d;&#x2e;',
+  'SCR' => '&#x20a8;',
+  'SGD' => '&#x24;',
+  'SBD' => '&#x24;',
+  'SOS' => '&#x53;',
+  'ZAR' => '&#x52;',
+  'LKR' => '&#x20a8;',
+  'SEK' => '&#x6b;&#x72;',
+  'CHF' => '&#x43;&#x48;&#x46;',
+  'SRD' => '&#x24;',
+  'SYP' => '&#xa3;',
+  'TWD' => '&#x4e;&#x54;&#x24;',
+  'THB' => '&#xe3f;',
+  'TTD' => '&#x54;&#x54;&#x24;',
+  'TRY' => '&#x20a4;',
+  'TVD' => '&#x24;',
+  'UAH' => '&#x20b4;',
+  'GBP' => '&#xa3;',
+  'USD' => '&#x24;',
+  'UYU' => '&#x24;&#x55;',
+  'UZS' => '&#x43b;&#x432;',
+  'VEF' => '&#x42;&#x73;',
+  'VND' => '&#x20ab;',
+  'YER' => '&#xfdfc;',
+  'ZWD' => '&#x5a;&#x24;',
+);
+
+
+$xchange = array();
+
+function load_xchange()
+{
+	global $xchange;
+	if (count($xchange)<1) /* read once per page load, as required */
+	{
+		$rates = file_get_contents('/tmp/euro.xml');
+		$rc=explode("currency='",$rates);
+		array_shift($rc);
+		foreach ($rc as $rt)
+		{
+			$rx=explode("'",$rt);
+			$cur = $rx[0];
+			$rate = $rx[2];
+			$xchange[$cur]=$rate;
+		}
+		$xchange['EUR']=1.0;
+	}
+}
+
+
+/* 
+	xlt function 
+   translate between currencies
+
+get data:
+wget -O /tmp/euro.xml http://www.eceurofxref/eurofxref-daily.xml
+
+*/
+
+function xlt($amt,$from,$to)
+{
+
+	global $csig;
+	global $xchange;
+
+	load_xchange();
+
+        $lv = $xchange[$from];
+        $rv = $xchange[$to];
+        $newamt = $amt/$lv * $rv;
+        return ($csig[$to].$newamt);
+}
+
+/* 
+	xlta function
+   translate amount into all other available currencies
+   returns array
+
+*/
+
+function xlta($amt,$from)
+{
+
+	global $csig;
+	global $xchange;
+
+	load_xchange();
+        
+	$ret = array();
+
+	foreach ($xchange as $k=>$v)
+	{
+		if ($k!=$from)
+		{
+	        	$lv = $xchange[$from];
+        		$newamt = $amt/$lv * $v;
+			$ret[$k] = $csig[$k].number_format($newamt,2,'.','');
+		}
+	}
+
+	return ($ret);
+}       
+
+
 function tryoembed($match) {
 	$url = ((count($match) == 2) ? $match[1] : $match[2]);
 
@@ -505,12 +699,13 @@ Array
     [signature] => b83c415f9f54fb32c979a4951d084e24edbf22b3
     [sku] => Test1
     [title] => This is a test
+    [description] => This is a test description.
     [images] => Array
         (
             [0] => https://rez.waitman.net/photo/0917a3b2e9844f3fca16552a6e78399d-1.jpg?f=&_u=150715063820
         )
 
-    [price] => $54.00
+    [price] => 54.00
     [currency] => USD
     [options] => Array
         (
@@ -560,6 +755,9 @@ if ($check != hash("whirlpool",serialize($json),false);
 
 */
 
+	global $csig;
+	global $xchange;
+
         if (strpos($Text,'[json]') !== false)
         {
                 $tmpva=explode('[json]',$Text);
@@ -580,11 +778,20 @@ if ($check != hash("whirlpool",serialize($json),false);
 					case 'list-product':
 					if (count($vjson['images'])>0)
 					{
-						$tmptxt .= '<img src="'.$vjson['images'][0].'" style="max-width:150px;height:auto;" />';
+						
+						$tmptxt .= '<div style="overflow:hidden;width:100%;">';
+						foreach ($vjson['images'] as $vimg)
+						{
+							$tmptxt.='<a href="'.$vimg.'" onclick="$.colorbox({href: '."'".$vimg."'".'}); return false;"><img src="'.$vimg.'" style="max-width:200px;height:auto;float:left;padding-right:1px;" /></a>';
+						}
+						$tmptxt .= '
+</div><div clear="both"></div>';
 					}
 					$tmptxt .= '<h2>'.$vjson['title'].'</h2>
 <p>SKU: '.$vjson['sku'].'</p>
+<p>'.$vjson['description'].'</p>
 <form method="post" action="addcart.php">
+<input type="hidden" name="sku" value="'.$vjson['sku'].'" />
 <input type="hidden" name="signature" value="'.$vjson['signature'].'" />
 ';
 
@@ -612,7 +819,7 @@ if ($check != hash("whirlpool",serialize($json),false);
 									$addprice = '';
 								}
 														
-								$tmptxt.= $jm[1].$addprice.'</option>';
+								$tmptxt.= $jm[0].$addprice.'</option>';
 							}
 							$tmptxt .= '</select></tr>';
 						}
@@ -620,8 +827,48 @@ if ($check != hash("whirlpool",serialize($json),false);
 						{
 							$tmptxt .= '</table>';
 						}
-						$tmptxt .= '<p>Price: $'.$vjson['price'].'</p>
-<input type="submit" name="addproduct" value="Add To Cart" />
+						$tmptxt .= '<p>Price: '.$csig[$vjson['currency']].number_format($vjson['price'],2,'.','').' '.$vjson['currency'].'</p>
+';
+
+$cur = xlta($vjson['price'],$vjson['currency']);
+
+$cols=6;
+$tmptxt .= '<table border="0" cellspacing="0" cellpadding="3" width="100%">
+';
+
+$co = array();
+$tc = 0;
+
+foreach ($cur as $k=>$v)
+{
+	$co[$tc++][]='<td style="font-size:80%;text-align:right;">'.$v.' '.$k.'</td>';
+	if ($tc==$cols)
+	{
+		$tc=0;
+	}
+}
+$maxrow = 0;
+for ($ij=0;$ij<$cols;$ij++)
+{
+	if (count($co)>$maxrow)
+	{
+		$maxrow=count($co);
+	}
+}
+for ($ij=0;$ij<$maxrow;$ij++)
+{
+	$tmptxt .= '<tr>';
+	for ($in=0;$in<$cols;$in++)
+	{
+		$tmptxt .= $co[$in][$ij];
+	}
+	$tmptxt .= '</tr>';
+}
+$tmptxt .= '
+</table>
+';
+$tmptxt .= '
+<input type="submit" name="addproduct" value="Purchase This Item" />
 </form>
 ';
 					}
