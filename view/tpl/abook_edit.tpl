@@ -22,6 +22,15 @@
 	</div>
 	<div class="section-content-wrapper-np">
 		{{if $notself}}
+		{{foreach $buttons as $b}}
+		{{if $b.info}}
+		<div class="section-content-danger-wrapper">
+			<div>
+				{{$b.info}}
+			</div>
+		</div>
+		{{/if}}
+		{{/foreach}}
 		<div class="section-content-info-wrapper">
 			<div>
 				{{$addr_text}} <strong>'{{$addr}}'</strong>
@@ -176,7 +185,8 @@
 				<div id="perms-tool-collapse" class="panel-collapse collapse{{if $self}} in{{/if}}" role="tabpanel" aria-labelledby="perms-tool">
 					<div class="section-content-tools-wrapper">
 						<div class="section-content-warning-wrapper">
-						{{$permnote}}
+						{{if $notself}}{{$permnote}}{{/if}}
+						{{if $self}}{{$permnote_self}}{{/if}}
 						</div>
 
 						<table id="perms-tool-table" class=form-group>
@@ -194,7 +204,9 @@
 
 						{{if $self}}
 						<div>
-							<div>{{$autolbl}}</div>
+							<div class="section-content-info-wrapper">
+								{{$autolbl}}
+							</div>
 							{{include file="field_checkbox.tpl" field=$autoperms}}
 						</div>
 						{{/if}}
