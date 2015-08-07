@@ -154,7 +154,7 @@ function load_xchange()
    translate between currencies
 
 get data:
-wget -O /tmp/euro.xml http://www.eceurofxref/eurofxref-daily.xml
+wget -O /tmp/euro.xml http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml
 
 */
 
@@ -827,7 +827,7 @@ if ($check != hash("whirlpool",serialize($json),false);
 						{
 							$tmptxt .= '</table>';
 						}
-						$tmptxt .= '<p>Price: '.$csig[$vjson['currency']].number_format($vjson['price'],2,'.','').' '.$vjson['currency'].'</p>
+						$tmptxt .= '<p>Price: '.$csig[$vjson['currency']].number_format(floatval($vjson['price']),2,'.','').' '.$vjson['currency'].'</p>
 ';
 
 $cur = xlta($vjson['price'],$vjson['currency']);

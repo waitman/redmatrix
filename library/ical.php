@@ -29,7 +29,7 @@
  * @example  $ical = new ical('MyCal.ics');
  *           print_r( $ical->get_event_array() );
 
-require 'class.iCalReader.php';
+//require 'class.iCalReader.php';
 
 $ical   = new ICal('MyCal.ics');
 $events = $ical->events();
@@ -160,6 +160,9 @@ class ICal
                     $type = "VCALENDAR";
                     break;
                 default:
+			$ky = @explode(';',$keyword);
+			$keyword = @array_shift($ky);
+
                     $this->addCalendarComponentWithKeyAndValue($type,
                                                                $keyword,
                                                                $value);
