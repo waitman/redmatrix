@@ -302,6 +302,11 @@ function admin_page_site_post(&$a){
 	$diaspora_enabled  = ((x($_POST,'diaspora_enabled')) ? intval($_POST['diaspora_enabled']) : 0);
 	$verify_email      = ((x($_POST,'verify_email'))     ? 1 : 0);
 
+	$memcached	   = ((x($_POST,'memcached'))        ? True : False );
+        $memcached_host    = ((x($_POST,'memcached_host'))   ? notags(trim($_POST['memcached_host'])) : '');
+        $memcached_port    = ((x($_POST,'memcached_port'))   ? notags(trim($_POST['memcached_port'])) : '');
+
+
 	set_config('system', 'feed_contacts', $feed_contacts);
 	set_config('system', 'diaspora_enabled', $diaspora_enabled);
 	set_config('system', 'delivery_interval', $delivery_interval);
@@ -359,6 +364,10 @@ function admin_page_site_post(&$a){
 	set_config('system','proxyuser', $proxyuser);
 	set_config('system','proxy', $proxy);
 	set_config('system','curl_timeout', $timeout);
+
+        set_config('system', 'memcached', $memcached);
+        set_config('system', 'memcached_host', $memcached_host);
+        set_config('system', 'memcached_port', $memcached_port);
 
 	info( t('Site settings updated.') . EOL);
 	goaway($a->get_baseurl(true) . '/admin/site' );
@@ -445,6 +454,7 @@ function admin_page_site(&$a) {
 
 
 	$homelogin = get_config('system','login_on_homepage');
+	$memcached = get_config('system','memcached');
 
 	$t = get_markup_template("admin_site.tpl");
 	return replace_macros($t, array(
@@ -482,6 +492,10 @@ function admin_page_site(&$a) {
 		'$force_publish'	=> array('publish_all', t("Force publish"), get_config('system','publish_all'), t("Check to force all profiles on this site to be listed in the site directory.")),
 		'$disable_discover_tab'	=> array('disable_discover_tab', t("Disable discovery tab"), get_config('system','disable_discover_tab'), t("Remove the tab in the network view with public content pulled from sources chosen for this site.")),
 		'$login_on_homepage'	=> array('login_on_homepage', t("login on Homepage"),((intval($homelogin) || $homelogin === false) ? 1 : '') , t("Present a login box to visitors on the home page if no other content has been configured.")),
+
+		'$memcached'    => array('memcached', t("use Memcached"),((intval($memcached) || $memcached === false) ? 1 : '') , t("Use Memcached for session storage.")),
+		'$memcached_host'            => array('memcached_host', t("Memcached Host"), get_config('system','memcached_host'), ""),
+		'$memcached_port'            => array('memcached_port', t("Memcached Port"), get_config('system','memcached_port'), ""),
 
 		'$proxyuser'		=> array('proxyuser', t("Proxy user"), get_config('system','proxyuser'), ""),
 		'$proxy'			=> array('proxy', t("Proxy URL"), get_config('system','proxy'), ""),

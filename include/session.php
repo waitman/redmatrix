@@ -43,12 +43,30 @@ function ref_session_open ($s, $n) {
 
 function ref_session_read ($id) {
 	global $session_exists;
-	if(x($id))
-		$r = q("SELECT `data` FROM `session` WHERE `sid`= '%s'", dbesc($id));
 
-	if(count($r)) {
-		$session_exists = true;
-		return $r[0]['data'];
+	if(x($id))
+	{
+		if (get_config('system','memcached'))
+		{
+			$mc = new Memcached();
+			$mc->addServer(get_config('system','memcached_host'),
+				get_config('system','memcached_port'));
+
+			$r = $mc->get($id);
+			if ($r['data'])
+			{
+				$session_exists = true;
+				return ($r['data']);
+			}
+		} else {
+
+			$r = q("SELECT `data` FROM `session` WHERE `sid`= '%s'", dbesc($id));
+
+			if(count($r)) {
+				$session_exists = true;
+				return $r[0]['data'];
+			}
+		}
 	}
 
 	return '';
@@ -65,20 +83,32 @@ function ref_session_write ($id, $data) {
 	$expire = time() + $session_expire;
 	$default_expire = time() + 300;
 
-	if($session_exists) {
-		q("UPDATE `session`
-				SET `data` = '%s', `expire` = '%s' WHERE `sid` = '%s'",
-				dbesc($data),
-				dbesc($expire),
-				dbesc($id)
-		);
+	if (get_config('system','memcached'))
+	{
+		$mc = new Memcached();
+		$mc->addServer(get_config('system','memcached_host'),
+			get_config('system','memcached_port'));
+		$r=array();
+		$r['data']=$data;
+		$r['expire']=$expire;
+		$mc->set($id,$r,$expire);
+
 	} else {
-		q("INSERT INTO `session` (sid, expire, data) values ('%s', '%s', '%s')",
-				//SET `sid` = '%s', `expire` = '%s', `data` = '%s'",
-				dbesc($id),
-				dbesc($default_expire),
-				dbesc($data)
-		);
+		if($session_exists) {
+			q("UPDATE `session`
+					SET `data` = '%s', `expire` = '%s' WHERE `sid` = '%s'",
+					dbesc($data),
+					dbesc($expire),
+					dbesc($id)
+			);
+		} else {
+			q("INSERT INTO `session` (sid, expire, data) values ('%s', '%s', '%s')",
+					//SET `sid` = '%s', `expire` = '%s', `data` = '%s'",
+					dbesc($id),
+					dbesc($default_expire),
+					dbesc($data)
+			);
+		}
 	}
 
 	return true;
@@ -91,16 +121,26 @@ function ref_session_close() {
 
 
 function ref_session_destroy ($id) {
-	q("DELETE FROM `session` WHERE `sid` = '%s'", dbesc($id));
+	if (get_config('system','memcached'))
+	{
+		$mc = new Memcached();
+		$mc->addServer(get_config('system','memcached_host'),
+			get_config('system','memcached_port'));
+		$mc->delete($id);
+	} else {
+		q("DELETE FROM `session` WHERE `sid` = '%s'", dbesc($id));
+	}
 	return true;
 }
 
 
 function ref_session_gc($expire) {
-	q("DELETE FROM session WHERE expire < %d", dbesc(time()));
-	if (! get_config('system', 'innodb'))
-		db_optimizetable('session');
-
+	if (!get_config('system','memcached'))
+	{
+		q("DELETE FROM session WHERE expire < %d", dbesc(time()));
+		if (! get_config('system', 'innodb'))
+			db_optimizetable('session');
+	}
 	return true;
 }
 

@@ -83,6 +83,9 @@
 	{{include file="field_input.tpl" field=$maxloadavg}}
 	{{include file="field_input.tpl" field=$abandon_days}}
 	{{include file="field_input.tpl" field=$default_expire_days}}
+	{{include file="field_checkbox.tpl" field=$memcached}}
+	{{include file="field_input.tpl" field=$memcached_host}}
+	{{include file="field_input.tpl" field=$memcached_port}}
 	
 	<div class="submit"><input type="submit" name="page_site" value="{{$submit}}" /></div>
 	
