@@ -49,7 +49,7 @@ define ( 'PLATFORM_NAME',            'redmatrix' );
 define ( 'RED_VERSION',             trim(file_get_contents('version.inc')) . 'R');
 define ( 'ZOT_REVISION',            1     );
 
-define ( 'DB_UPDATE_VERSION',       1145  );
+define ( 'DB_UPDATE_VERSION',       1152  );
 
 /**
  * @brief Constant with a HTML line break.
@@ -80,9 +80,8 @@ $DIRECTORY_FALLBACK_SERVERS = array(
 	'https://zothub.com', 
 	'https://zotid.net', 
 	'https://red.zottel.red',
-	'https://redmatrix.info',
+	'https://gravizot.de',
 	'https://my.federated.social',
-	'https://redmatrix.nl'
 );
 
 

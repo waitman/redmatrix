@@ -1560,8 +1560,9 @@ function process_delivery($sender, $arr, $deliveries, $relay, $public = false, $
 
 		$tag_delivery = tgroup_check($channel['channel_id'],$arr);
 
-		$perm = (($arr['mid'] == $arr['parent_mid']) ? 'send_stream' : 'post_comments');
-
+		$perm = 'send_stream';
+		if(($arr['mid'] !== $arr['parent_mid']) && ($relay))
+			$perm = 'post_comments';
 
 		// This is our own post, possibly coming from a channel clone
 
@@ -1660,9 +1661,9 @@ function process_delivery($sender, $arr, $deliveries, $relay, $public = false, $
 			}
 		}
 
-		$ab = q("select abook.* from abook left join xchan on abook_xchan = xchan_hash where abook_channel = %d and (abook_flags & %d) = 0",
+		$ab = q("select * from abook where abook_channel = %d and abook_xchan = '%s'",
 			intval($channel['channel_id']),
-			intval(ABOOK_FLAG_SELF)
+			dbesc($arr['owner_xchan'])
 		);
 		$abook = (($ab) ? $ab[0] : null); 
 
@@ -2929,7 +2930,7 @@ function process_channel_sync_delivery($sender, $arr, $deliveries) {
 						$total_feeds ++;
 			}
 
-			$disallowed = array('abook_id','abook_account','abook_channel');
+			$disallowed = array('abook_id','abook_account','abook_channel','abook_blocked','abook_ignored','abook_hidden','abook_archived','abook_pending','abook_unconnected','abook_self','abook_feed');
 
 			foreach($arr['abook'] as $abook) {
 
@@ -3028,7 +3029,6 @@ function process_channel_sync_delivery($sender, $arr, $deliveries) {
 					foreach($clean as $k => $v) {
 						if($k == 'abook_dob')
 							$v = dbescdate($v);
-
 						$r = dbq("UPDATE abook set " . dbesc($k) . " = '" . dbesc($v)
 						. "' where abook_xchan = '" . dbesc($clean['abook_xchan']) . "' and abook_channel = " . intval($channel['channel_id']));
 					}

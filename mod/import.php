@@ -225,10 +225,36 @@ function import_post(&$a) {
 		foreach($hublocs as $hubloc) {
 			$arr = array(
 				'guid' => $hubloc['hubloc_guid'],
-				'guid_sig' => $hubloc['guid_sig'],
+				'guid_sig' => $hubloc['hubloc_guid_sig'],
 				'url' => $hubloc['hubloc_url'],
 				'url_sig' => $hubloc['hubloc_url_sig']
 			);
+
+			$hash = make_xchan_hash($hubloc['hubloc_guid'],$hubloc['hubloc_guid_sig']);
+			if($hubloc['hubloc_network'] === 'zot' && $hash !== $hubloc['hubloc_hash']) {
+				logger('forged hubloc: ' . print_r($hubloc,true));
+				continue;
+			}
+
+			if(array_key_exists('hubloc_primary',$hubloc)) {		
+				if(intval($hubloc['hubloc_primary'])) {
+					$hubloc['hubloc_flags'] |= HUBLOC_FLAGS_PRIMARY;
+					unset($hubloc['hubloc_primary']);
+				}
+				if(intval($hubloc['hubloc_orphancheck'])) {
+					$hubloc['hubloc_flags'] |= HUBLOC_FLAGS_ORPHANCHECK;
+					unset($hubloc['hubloc_orphancheck']);
+				}
+				if(intval($hubloc['hubloc_deleted'])) {
+					$hubloc['hubloc_flags'] |= HUBLOC_FLAGS_DELETED;
+					unset($hubloc['hubloc_deleted']);
+				}
+				if(intval($hubloc['hubloc_error'])) {
+					$hubloc['hubloc_status'] |= HUBLOC_ERROR;
+					unset($hubloc['hubloc_error']);
+				}
+			}
+
 			if(($hubloc['hubloc_hash'] === $channel['channel_hash']) && ($hubloc['hubloc_flags'] & HUBLOC_FLAGS_PRIMARY) && ($seize))
 				$hubloc['hubloc_flags'] = ($hubloc['hubloc_flags'] ^ HUBLOC_FLAGS_PRIMARY);
 
@@ -308,6 +334,12 @@ function import_post(&$a) {
 	if($xchans) {
 		foreach($xchans as $xchan) {
 
+			$hash = make_xchan_hash($xchan['xchan_guid'],$xchan['xchan_guid_sig']);
+			if($xchan['xchan_network'] === 'zot' && $hash !== $xchan['xchan_hash']) {
+				logger('forged xchan: ' . print_r($xchan,true));
+				continue;
+			}
+
 			$r = q("select xchan_hash from xchan where xchan_hash = '%s' limit 1",
 				dbesc($xchan['xchan_hash'])
 			);
@@ -353,11 +385,37 @@ function import_post(&$a) {
 	$abooks = $data['abook'];
 	if($abooks) {
 		foreach($abooks as $abook) {
-			if($max_friends !== false && $friends > $max_friends)
-				continue;
-			if($max_feeds !== false && ($abook['abook_flags'] & ABOOK_FLAG_FEED) && $feeds > $max_feeds)
-				continue;
+			if(array_key_exists('abook_blocked',$abook) && intval($abook['abook_blocked'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_BLOCKED;
+			}
+			if(array_key_exists('abook_ignored',$abook) && intval($abook['abook_ignored'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_IGNORED;
+			}
+			if(array_key_exists('abook_hidden',$abook) && intval($abook['abook_hidden'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_HIDDEN;
+			}
+			if(array_key_exists('abook_archived',$abook) && intval($abook['abook_archived'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_ARCHIVED;
+			}
+			if(array_key_exists('abook_pending',$abook) && intval($abook['abook_pending'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_PENDING;
+			}
+			if(array_key_exists('abook_unconnected',$abook) && intval($abook['abook_unconnected'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_UNCONNECTED;
+			}
+			if(array_key_exists('abook_self',$abook) && intval($abook['abook_self'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_SELF;
+			}
+			if(array_key_exists('abook_feed',$abook) && intval($abook['abook_feed'])) {
+				$abook['abook_flags'] |= ABOOK_FLAG_FEED;
+			}
 
+			if(! ( $abook['abook_flags'] & ABOOK_FLAG_SELF)) {
+				if($max_friends !== false && $friends > $max_friends)
+					continue;
+				if($max_feeds !== false && ($abook['abook_flags'] & ABOOK_FLAG_FEED) && $feeds > $max_feeds)
+					continue;
+			}
 			unset($abook['abook_id']);
 			$abook['abook_account'] = get_account_id();
 			$abook['abook_channel'] = $channel['channel_id'];

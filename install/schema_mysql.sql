@@ -432,6 +432,12 @@ CREATE TABLE IF NOT EXISTS `event` (
   `allow_gid` mediumtext NOT NULL,
   `deny_cid` mediumtext NOT NULL,
   `deny_gid` mediumtext NOT NULL,
+  `event_status` char(255) NOT NULL DEFAULT '',
+  `event_status_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `event_percent` smallint(6) NOT NULL DEFAULT '0',
+  `event_repeat` text NOT NULL,
+  `event_sequence` smallint(6) NOT NULL DEFAULT '0',
+  `event_priority` smallint(6) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `uid` (`uid`),
   KEY `type` (`type`),
@@ -442,7 +448,10 @@ CREATE TABLE IF NOT EXISTS `event` (
   KEY `ignore` (`ignore`),
   KEY `aid` (`aid`),
   KEY `event_hash` (`event_hash`),
-  KEY `event_xchan` (`event_xchan`)
+  KEY `event_xchan` (`event_xchan`),
+  KEY `event_status` (`event_status`),
+  KEY `event_sequence` (`event_sequence`),
+  KEY `event_priority` (`event_priority`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -763,6 +772,7 @@ CREATE TABLE IF NOT EXISTS `likes` (
   `liker` char(128) NOT NULL DEFAULT '',
   `likee` char(128) NOT NULL DEFAULT '',
   `iid` int(11) unsigned NOT NULL DEFAULT '0',
+  `i_mid` char(255) NOT NULL DEFAULT '',
   `verb` char(255) NOT NULL DEFAULT '',
   `target_type` char(255) NOT NULL DEFAULT '',
   `target_id` char(128) NOT NULL DEFAULT '',
@@ -771,6 +781,7 @@ CREATE TABLE IF NOT EXISTS `likes` (
   KEY `liker` (`liker`),
   KEY `likee` (`likee`),
   KEY `iid` (`iid`),
+  KEY `i_mid` (`i_mid`),
   KEY `verb` (`verb`),
   KEY `target_type` (`target_type`),
   KEY `channel_id` (`channel_id`),
